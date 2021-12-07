@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">Neuromatrix-APK</string>
+    <string name="title_settings">Settings</string>
+    <string name="title_commands">Commands</string>
+    <string name="title_program">Program</string>
+
+    <string-array name="segments">
+        <item>Лев. большой</item>
+        <item>Лев. указат.</item>
+        <item>Лев. средний</item>
+        <item>Прав. большой</item>
+        <item>Прав. указат.</item>
+        <item>Прав. средний</item>
+    </string-array>
+
+    <string-array name="programs">
+        <item>Пианино 1</item>
+    </string-array>
+</resources>
