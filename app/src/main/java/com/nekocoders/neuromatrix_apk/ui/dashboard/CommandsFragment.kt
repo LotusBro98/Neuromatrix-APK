@@ -100,8 +100,9 @@ class CommandsFragment : Fragment() {
 
                 binding.seekBarT.progress = 0
                 binding.seekBarT.progress = binding.seekBarT.max
-                binding.seekBarT.progress = (x_duration * binding.seekBarT.max).roundToInt()
-
+                if (duration != -1) {
+                    binding.seekBarT.progress = (x_duration * binding.seekBarT.max).roundToInt()
+                }
             }
         })
 
@@ -148,10 +149,17 @@ class CommandsFragment : Fragment() {
                 val device = (activity as MainActivity).device
                 val T = device.T
                 val t_max = MAX_DURATION_MS * 1000 / T.toDouble()
-                val duration = (T * t_max.pow(x) / 1000).toInt()
-                device.segments[channel].curCommand.duration = duration
-                device.segments[channel].curCommand.save(requireContext())
-                binding.tView.text = duration.toString() + " мс"
+                if (progress == seekBar.max) {
+                    val duration = -1
+                    device.segments[channel].curCommand.duration = duration
+                    device.segments[channel].curCommand.save(requireContext())
+                    binding.tView.text = "∞"
+                } else {
+                    val duration = (T * t_max.pow(x) / 1000).toInt()
+                    device.segments[channel].curCommand.duration = duration
+                    device.segments[channel].curCommand.save(requireContext())
+                    binding.tView.text = duration.toString() + " мс"
+                }
             }
             override fun onStartTrackingTouch(seekBar: SeekBar) {}
             override fun onStopTrackingTouch(seekBar: SeekBar) {}

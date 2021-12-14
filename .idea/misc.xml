@@ -7,12 +7,13 @@
         <entry key="..\:/Users/kingb/AndroidStudioProjects/NeuromatrixAPK/app/src/main/res/layout/activity_main.xml" value="0.20520833333333333" />
         <entry key="..\:/Users/kingb/AndroidStudioProjects/NeuromatrixAPK/app/src/main/res/layout/fragment_commands.xml" value="0.25" />
         <entry key="..\:/Users/kingb/AndroidStudioProjects/NeuromatrixAPK/app/src/main/res/layout/fragment_init.xml" value="0.20520833333333333" />
-        <entry key="..\:/Users/kingb/AndroidStudioProjects/NeuromatrixAPK/app/src/main/res/layout/fragment_patterns.xml" value="0.35280797101449274" />
+        <entry key="..\:/Users/kingb/AndroidStudioProjects/NeuromatrixAPK/app/src/main/res/layout/fragment_patterns.xml" value="0.25" />
         <entry key="..\:/Users/kingb/AndroidStudioProjects/NeuromatrixAPK/app/src/main/res/layout/recycler_board_config.xml" value="0.2911458333333333" />
         <entry key="..\:/Users/kingb/AndroidStudioProjects/NeuromatrixAPK/app/src/main/res/layout/recycler_pattern_item.xml" value="0.35280797101449274" />
         <entry key="..\:/Users/kingb/AndroidStudioProjects/NeuromatrixAPK/app/src/main/res/layout/recycler_time_slot.xml" value="0.35280797101449274" />
         <entry key="..\:/Users/kingb/AndroidStudioProjects/NeuromatrixAPK/app/src/main/res/menu/bottom_nav_menu.xml" value="0.36666666666666664" />
         <entry key="..\:/Users/kingb/AppData/Local/Android/Sdk/platforms/android-30/data/res/layout/simple_list_item_1.xml" value="0.20052083333333334" />
+        <entry key="..\:/Users/kingb/AppData/Local/Android/Sdk/platforms/android-30/data/res/layout/simple_spinner_dropdown_item.xml" value="0.21458333333333332" />
       </map>
     </option>
   </component>

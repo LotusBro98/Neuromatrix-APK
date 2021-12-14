@@ -411,7 +411,11 @@ class Device(var ctx: Context) {
 
         override fun onPostExecute(result: Boolean) {
             if (result) {
-                cmd_log_view?.text = cmd_log_view?.text.toString() + "Connected to $deviceName\n"
+                cmd_log += "Connected to $deviceName\n"
+
+                ui_handler.post {
+                    cmd_log_view?.text = cmd_log
+                }
                 Toast.makeText(ctx, "Connected to $deviceName", Toast.LENGTH_SHORT).show()
                 initialize(ctx)
             } else {
@@ -419,44 +423,4 @@ class Device(var ctx: Context) {
             }
         }
     }
-
-//    inner private class BTCommandAsyncTask(var ctx: Context, var command: ByteArray, var callback: Runnable?) : AsyncTask<ByteArray?, Int?, Boolean>() {
-//        var response: ByteArray? = null
-//        override fun doInBackground(vararg data: ByteArray?): Boolean {
-//            val retries = 3
-//            return try {
-//                val cmd = wrapPacket(command)
-//                for (i in 1..retries) {
-////                    if (socket!!.inputStream.available() > 0) {
-////                        var buf = ByteArray(socket!!.inputStream.available())
-////                        socket!!.inputStream.read(buf, 0, socket!!.inputStream.available())
-////                    }
-//                    socket!!.outputStream.write(cmd)
-//                    socket!!.outputStream.flush();
-//                    var resp: ByteArray? = ByteArray(1024)
-//                    val byteCount = socket!!.inputStream.read(resp!!, 0, 1024, 100)
-//                    resp = unwrapPacket(resp.copyOfRange(0, byteCount))
-//                    if (resp != null) {
-//                        response = resp
-//                        break
-//                    }
-//                }
-//                true
-//            } catch (e: Exception) {
-//                e.printStackTrace()
-//                false
-//            }
-//        }
-//
-//        override fun onPostExecute(result: Boolean) {
-//            if (result) {
-//                cmd_log?.text = cmd_log?.text.toString() + "CMD --> : " + bytesToHex(command) + "\n"
-//                cmd_log?.text = cmd_log?.text.toString() + "RES <-- : " + response?.decodeToString() + "\n"
-//                callback?.run()
-//            } else {
-//                Toast.makeText(ctx, "Failed to send command to device", Toast.LENGTH_SHORT).show()
-//                socket = null
-//            }
-//        }
-//    }
 }
