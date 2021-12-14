@@ -42,7 +42,7 @@ class PatternsRecyclerAdapter(var commands : List<Command>) : RecyclerView.Adapt
     override fun onBindViewHolder(holder: PatternViewHolder, position: Int) {
         val cmd = commands[position]
         holder.checkbox.isChecked = false;
-        holder.text_name.text = holder.itemView.resources.getStringArray(R.array.segments)[cmd.id];
+        holder.text_name.text = holder.itemView.resources.getStringArray(R.array.segments)[cmd.channel];
         holder.text_tau.text = cmd.tau.toString();
         holder.text_f.text = (1000 / (cmd.period)).toString();
         holder.text_t.text = cmd.duration.toString();

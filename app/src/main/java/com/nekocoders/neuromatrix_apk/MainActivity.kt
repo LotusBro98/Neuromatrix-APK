@@ -8,6 +8,8 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.nekocoders.neuromatrix_apk.databinding.ActivityMainBinding
+import android.widget.Toast
+import android.content.Intent
 
 class MainActivity : AppCompatActivity() {
 
@@ -31,6 +33,17 @@ class MainActivity : AppCompatActivity() {
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
 
-        device = Device()
+        device = Device(this)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_ENABLE_BT) { // Если разрешили включить Bluetooth, тогда void setup()
+            if (resultCode == RESULT_OK) {
+                device.connect(this)
+            } else { // Если не разрешили, тогда закрываем приложение
+                Toast.makeText(this, "BlueTooth не включён", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 }

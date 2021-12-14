@@ -10,6 +10,5 @@ class Segment(var name: String,
               var mask2: Array<Int>
               )
 {
-    var curCommand: Command? = null
-    var curCommandStartTime: Date? = null
+    var curCommand: Command = Command(0, 10, 1, 10)
 }

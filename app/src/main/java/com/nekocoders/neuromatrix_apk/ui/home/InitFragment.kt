@@ -75,6 +75,11 @@ class BoardsRecyclerAdapter :
 
 class InitFragment : Fragment() {
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        retainInstance = true;
+    }
+
     private lateinit var initViewModel: InitViewModel
     private var _binding: FragmentInitBinding? = null
 
@@ -93,26 +98,24 @@ class InitFragment : Fragment() {
         _binding = FragmentInitBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-//        val textView: TextView = binding.textHome
-//        initViewModel.text.observe(viewLifecycleOwner, Observer {
-//            textView.text = it
-//        })
-
-//        binding.recyclerBoards.layoutManager = LinearLayoutManager(this.activity);
-//        binding.recyclerBoards.adapter = BoardsRecyclerAdapter()
-//        binding.recyclerBoards.addItemDecoration(
-//            DividerItemDecoration(
-//                activity,
-//                DividerItemDecoration.VERTICAL
-//            )
-//        )
+        val main = activity as MainActivity
+        main.device.cmd_log_view = binding.commandLog
 
         binding.button.setOnClickListener {
-            val main = activity as MainActivity
-            main.device.connect(main)
+            if (main.device.socket == null || !main.device.socket!!.isConnected) {
+                main.device.connect(main)
+            } else {
+                main.device.initialize(main)
+            }
         }
 
+        binding.commandLog.text = (activity as MainActivity).device.cmd_log
+
         return root
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
     }
 
     override fun onDestroyView() {
