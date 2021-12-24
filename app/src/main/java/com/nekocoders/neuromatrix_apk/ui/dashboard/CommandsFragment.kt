@@ -69,7 +69,7 @@ class CommandsFragment : Fragment() {
             val segment = (activity as MainActivity).device.segments[i]
             val button = RadioButton(this.context)
             button.setPadding(24, 24, 24, 24)
-            button.text = segment.name
+            button.text = segment.getDisplayName()
             button.id = i + 1
             binding.commandsRadio.addView(button)
         }

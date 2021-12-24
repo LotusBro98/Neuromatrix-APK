@@ -11,4 +11,17 @@ class Segment(var name: String,
               )
 {
     var curCommand: Command = Command(0, 10, 1, 10)
+
+    fun getMaskStr(mask: Array<Int>): String {
+        var str = ""
+        for (i in mask) {
+            str += "$i;"
+        }
+        str = str.removeSuffix(";")
+        return str
+    }
+
+    fun getDisplayName(): String {
+        return "$name    ($board1: ${getMaskStr(mask1)} | $board2: ${getMaskStr(mask2)})"
+    }
 }

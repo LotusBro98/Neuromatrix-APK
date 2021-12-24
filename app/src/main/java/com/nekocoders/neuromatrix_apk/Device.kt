@@ -23,6 +23,8 @@ val TIME_CAROUSEL_US = 10000
 const val REQUEST_ENABLE_BT = 1
 private val BLUETOOTH_SPP = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
 private val CYBER_SUIT_NAME = "CyberSuit-3000"
+private val ACK_CHAR: Byte = 'A'.toByte()
+private val LEN_CHAR: Byte = 'L'.toByte()
 private val BEG_CHAR: Byte = 'H'.toByte()
 private val END_CHAR: Byte = 'B'.toByte()
 
@@ -47,37 +49,19 @@ fun InputStream.read(
     buffer: ByteArray,
     offset: Int,
     length: Int,
-    ans_timeout: Long,
     timeout: Long
 ): Int = runBlocking {
     var byteCount = 0
+    mark(1024)
     try {
-        withTimeout(ans_timeout) {
-            while (available() <= 0) {
-                delay(timeout)
-            }
-            var read_now = -1
-            while (read_now != 0) {
-                try {
-                    withTimeout(timeout) {
-                        read_now = async {
-                            if (available() > 0) read(
-                                buffer,
-                                offset + byteCount,
-                                length - byteCount
-                            ) else 0
-                        }.await()
-                    }
-                    byteCount += read_now
-                } catch (e: TimeoutCancellationException) {
-                    read_now = 0
-                }
-            }
+        withTimeout(timeout) {
+            byteCount = read(buffer, offset, length)
         }
     } catch (e: TimeoutCancellationException) {
-
+        reset()
+        return@runBlocking 0
     }
-    byteCount
+    return@runBlocking byteCount
 }
 
 class Device(var ctx: Context) {
@@ -107,17 +91,27 @@ class Device(var ctx: Context) {
 
         T = TIME_CAROUSEL_US
         segments = mutableListOf()
-        segments.add(Segment("Лев. большой", 0, 1, 200, arrayOf(0,1,2,3,4,5,6,7), arrayOf(0,1)))
-        segments.add(Segment("Лев. указат.", 0, 1, 200, arrayOf(0,1,2,3,4,5,6,7), arrayOf(2)))
-        segments.add(Segment("Лев. средний", 0, 1, 200, arrayOf(0,1,2,3,4,5,6,7), arrayOf(3)))
-        segments.add(Segment("Лев. безымян", 0, 1, 200, arrayOf(0,1,2,3,4,5,6,7), arrayOf(4)))
-        segments.add(Segment("Лев. мизинец", 0, 1, 200, arrayOf(0,1,2,3,4,5,6,7), arrayOf(5)))
+        segments.add(Segment("L1P",      0, 1, 500, arrayOf(0,1,2,3,4,5,6,7), arrayOf(0)))
+        segments.add(Segment("L1",       0, 1, 500, arrayOf(0,1,2,3,4,5,6,7), arrayOf(1)))
+        segments.add(Segment("L2",       0, 1, 500, arrayOf(0,1,2,3,4,5,6,7), arrayOf(2)))
+        segments.add(Segment("L3",       0, 1, 500, arrayOf(0,1,2,3,4,5,6,7), arrayOf(3)))
+        segments.add(Segment("L4",       0, 1, 500, arrayOf(0,1,2,3,4,5,6,7), arrayOf(4)))
+        segments.add(Segment("L5",       0, 1, 500, arrayOf(0,1,2,3,4,5,6,7), arrayOf(5)))
+        segments.add(Segment("Lудерж",   0, 1, 500, arrayOf(0,1,2,3,4,5,6,7), arrayOf(6)))
+        segments.add(Segment("Lвправо",  0, 1, 500, arrayOf(0,1,2,3,4,5,6,7), arrayOf(7)))
+        segments.add(Segment("Lвлево",   0, 1, 500, arrayOf(0,1,2,3,4,5,6,7), arrayOf(8)))
+        segments.add(Segment("Lзапястье",0, 1, 500, arrayOf(0,1,2,3,4,5,6,7), arrayOf(9)))
 
-        segments.add(Segment("Прав. большой", 0, 2, 200, arrayOf(8,9,10,11,12,13,14,15), arrayOf(0,1)))
-        segments.add(Segment("Прав. указат.", 0, 2, 200, arrayOf(8,9,10,11,12,13,14,15), arrayOf(2)))
-        segments.add(Segment("Прав. средний", 0, 2, 200, arrayOf(8,9,10,11,12,13,14,15), arrayOf(3)))
-        segments.add(Segment("Прав. безымян", 0, 2, 200, arrayOf(8,9,10,11,12,13,14,15), arrayOf(4)))
-        segments.add(Segment("Прав. мизинец", 0, 2, 200, arrayOf(8,9,10,11,12,13,14,15), arrayOf(5)))
+        segments.add(Segment("R1P",      0, 2, 500, arrayOf(8,9,10,11,12,13,14,15), arrayOf(0)))
+        segments.add(Segment("R1",       0, 2, 500, arrayOf(8,9,10,11,12,13,14,15), arrayOf(1)))
+        segments.add(Segment("R2",       0, 2, 500, arrayOf(8,9,10,11,12,13,14,15), arrayOf(2)))
+        segments.add(Segment("R3",       0, 2, 500, arrayOf(8,9,10,11,12,13,14,15), arrayOf(3)))
+        segments.add(Segment("R4",       0, 2, 500, arrayOf(8,9,10,11,12,13,14,15), arrayOf(4)))
+        segments.add(Segment("R5",       0, 2, 500, arrayOf(8,9,10,11,12,13,14,15), arrayOf(5)))
+        segments.add(Segment("Rудерж",   0, 2, 500, arrayOf(8,9,10,11,12,13,14,15), arrayOf(6)))
+        segments.add(Segment("Rвправо",  0, 2, 500, arrayOf(8,9,10,11,12,13,14,15), arrayOf(7)))
+        segments.add(Segment("Rвлево",   0, 2, 500, arrayOf(8,9,10,11,12,13,14,15), arrayOf(8)))
+        segments.add(Segment("Rзапястье",0, 2, 500, arrayOf(8,9,10,11,12,13,14,15), arrayOf(9)))
 
         for (i in segments.indices) {
             segments[i].curCommand.channel = i
@@ -176,18 +170,32 @@ class Device(var ctx: Context) {
         val cmd = wrapPacket(cmd_addr)
 
         var response: ByteArray? = null
-        val retries = 5
+        val retries = 1
         try {
             for (i in 1..retries) {
 //                val skipped = socket!!.inputStream.skip(socket!!.inputStream.available().toLong())
+                socket!!.outputStream.write(byteArrayOf(LEN_CHAR))
+                socket!!.outputStream.write(byteArrayOf(cmd.size.toByte()))
                 socket!!.outputStream.write(cmd)
                 socket!!.outputStream.flush();
-                var resp: ByteArray? = ByteArray(1024)
-                val byteCount = socket!!.inputStream.read(resp!!, 0, 1024, 300, 20)
-                resp = unwrapPacket(resp.copyOfRange(0, byteCount))
-                if (resp != null) {
-                    response = resp
+                var resp: ByteArray = ByteArray(1024)
+                var byteCount1 = 0
+                byteCount1 = socket!!.inputStream.read(resp, 0, 1, 50)
+                while (byteCount1 != 0 && resp[0] != LEN_CHAR) {
+                    byteCount1 = socket!!.inputStream.read(resp, 0, 1, 1)
+                }
+                if (byteCount1 == 0 || resp[0] != LEN_CHAR) {
+                    continue
+                }
+                socket!!.inputStream.read(resp, 0, 1, 50)
+                val length = resp[0]
+                val byteCount = socket!!.inputStream.read(resp, 0, length.toInt(), 1000)
+                val resp2 = unwrapPacket(resp.copyOfRange(0, byteCount))
+                if (resp2 != null && resp2.decodeToString().subSequence(0, 2) == "OK") {
+                    response = resp2
                     break
+                } else {
+                    response = resp2
                 }
             }
 
@@ -230,7 +238,7 @@ class Device(var ctx: Context) {
         }
 
         for (i in boards.indices) {
-            postCommand(ctx, 0, byteArrayOf(0), log=false)
+//            postCommand(ctx, 0, byteArrayOf(0), log=false)
             postCommand(ctx, i, cmd_assign(masks[i]), msg="assign")
         }
 
@@ -238,12 +246,15 @@ class Device(var ctx: Context) {
             calibrate_channel(ctx, segments[i_seg].board1, segments[i_seg].board2, i_seg)
         }
 
+//        postCommand(ctx, 0, byteArrayOf(0), log=false)
         postCommand(ctx, 0, cmd_clk_sync(1), "clk sync")
 
         for (i in boards.indices) {
-            postCommand(ctx, 0, byteArrayOf(0), log=false)
+//            postCommand(ctx, 0, byteArrayOf(0), log=false)
             postCommand(ctx, i, byteArrayOf(CMD_RELEASE))
+//            postCommand(ctx, 0, byteArrayOf(0), log=false)
             postCommand(ctx, i, cmd_allocate(slots), "allocate")
+//            postCommand(ctx, 0, byteArrayOf(0), log=false)
             postCommand(ctx, i, cmd_set_period(T))
         }
     }
@@ -310,18 +321,20 @@ class Device(var ctx: Context) {
     }
 
     fun set_impulse(ctx: Context, brd1: Int, brd2: Int, channel: Int, period: Int, tau: Int) {
-        postCommand(ctx, 0, byteArrayOf(0), log=false)
-        postCommand(ctx, brd1, cmd_set_pattern(channel, period, arrayOf(Impulse(0, tau))), msg="pattern ch " + channel + " brd " + brd1)
-        postCommand(ctx, 0, byteArrayOf(0), log=false)
+//        postCommand(ctx, 0, byteArrayOf(0), log=false)
         postCommand(ctx, brd2, cmd_set_pattern(channel, period, arrayOf(Impulse(tau, tau))), msg="pattern ch " + channel + " brd " + brd2)
+//        postCommand(ctx, 0, byteArrayOf(0), log=false)
+        postCommand(ctx, brd1, cmd_set_pattern(channel, period, arrayOf(Impulse(0, tau))), msg="pattern ch " + channel + " brd " + brd1)
     }
 
     fun calibrate_channel(ctx: Context, brd1: Int, brd2: Int, channel: Int) {
+//        postCommand(ctx, 0, byteArrayOf(0), log=false)
         postCommand(ctx, brd2, cmd_pulldown(channel))
-        postCommand(ctx, 0, byteArrayOf(0), log=false)
+//        postCommand(ctx, 0, byteArrayOf(0), log=false)
         postCommand(ctx, brd1, cmd_calibrate(channel), msg="calibrate ch " + channel + " brd " + brd1)
+//        postCommand(ctx, 0, byteArrayOf(0), log=false)
         postCommand(ctx, brd1, cmd_pulldown(channel))
-        postCommand(ctx, 0, byteArrayOf(0), log=false)
+//        postCommand(ctx, 0, byteArrayOf(0), log=false)
         postCommand(ctx, brd2, cmd_calibrate(channel), msg="calibrate ch " + channel + " brd " + brd2)
     }
 
@@ -362,7 +375,7 @@ class Device(var ctx: Context) {
         if (packet.size < 6)
             return null
         if (packet[0] != BEG_CHAR || packet[packet.size - 1] != END_CHAR)
-            return null
+            return packet
 
         val crc_recv = ByteArrayToUInt32(packet.copyOfRange(packet.size-5, packet.size-1))
         val crc32 = CRC32()
@@ -372,7 +385,7 @@ class Device(var ctx: Context) {
         val crc_calc = crc32.value
 
         if (crc_recv != crc_calc)
-            return null
+            return packet
 
         return data
     }

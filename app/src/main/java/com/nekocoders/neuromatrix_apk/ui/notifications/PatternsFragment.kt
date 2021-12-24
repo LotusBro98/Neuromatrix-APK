@@ -255,7 +255,7 @@ class PatternsFragment : Fragment() {
             holder.spinner_name.adapter = ArrayAdapter(requireContext(),
                 android.R.layout.simple_spinner_dropdown_item,
                 android.R.id.text1,
-                Array(device.segments.size + 1) { if (it == 0) {"delay"} else {device.segments[it - 1].name}}
+                Array(device.segments.size + 1) { if (it == 0) {"delay"} else {device.segments[it - 1].getDisplayName()}}
             )
             holder.cmd = cmd
             holder.spinner_name.setSelection(cmd.channel + 1, false)
