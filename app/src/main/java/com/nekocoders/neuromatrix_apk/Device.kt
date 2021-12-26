@@ -175,7 +175,7 @@ class Device(var ctx: Context) {
         val cmd = wrapPacket(cmd_addr)
 
         var response: ByteArray? = null
-        val retries = 1
+        val retries = 16
         Log.d("COMMAND", "1")
         try {
             for (i in 1..retries) {
@@ -188,10 +188,10 @@ class Device(var ctx: Context) {
                 Log.d("COMMAND", "3")
                 var resp: ByteArray = ByteArray(1024)
                 var byteCount1 = 0
-                byteCount1 = socket!!.inputStream.read(resp, 0, 1, 100)
+                byteCount1 = socket!!.inputStream.read(resp, 0, 1, 200)
                 while (byteCount1 != 0 && resp[0] != LEN_CHAR) {
                     Log.d("COMMAND", "f")
-                    byteCount1 = socket!!.inputStream.read(resp, 0, 1, 100)
+                    byteCount1 = socket!!.inputStream.read(resp, 0, 1, 200)
                     Log.d("COMMAND", "t")
                 }
                 Log.d("COMMAND", "s")
