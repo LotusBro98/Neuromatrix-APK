@@ -176,29 +176,22 @@ class Device(var ctx: Context) {
 
         var response: ByteArray? = null
         val retries = 16
-        Log.d("COMMAND", "1")
         try {
             for (i in 1..retries) {
 //                val skipped = socket!!.inputStream.skip(socket!!.inputStream.available().toLong())
-                Log.d("COMMAND", "2")
                 socket!!.outputStream.write(byteArrayOf(LEN_CHAR))
                 socket!!.outputStream.write(byteArrayOf(cmd.size.toByte()))
                 socket!!.outputStream.write(cmd)
                 socket!!.outputStream.flush();
-                Log.d("COMMAND", "3")
                 var resp: ByteArray = ByteArray(1024)
                 var byteCount1 = 0
                 byteCount1 = socket!!.inputStream.read(resp, 0, 1, 200)
                 while (byteCount1 != 0 && resp[0] != LEN_CHAR) {
-                    Log.d("COMMAND", "f")
                     byteCount1 = socket!!.inputStream.read(resp, 0, 1, 200)
-                    Log.d("COMMAND", "t")
                 }
-                Log.d("COMMAND", "s")
                 if (byteCount1 == 0 || resp[0] != LEN_CHAR) {
                     continue
                 }
-                Log.d("COMMAND", "4")
                 socket!!.inputStream.read(resp, 0, 1, 1000)
                 val length = resp[0].toUByte()
                 if (length.toUInt().toInt() == 0)
@@ -212,7 +205,6 @@ class Device(var ctx: Context) {
                     response = resp
 //                    runBlocking { delay(100) }
                 }
-                Log.d("COMMAND", "5")
             }
 
             if (log) {
