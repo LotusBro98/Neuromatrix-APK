@@ -12,11 +12,13 @@ import java.util.*
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
 import android.os.*
+import android.util.Log
 import android.widget.TextView
 import kotlinx.coroutines.*
 import java.io.InputStream
 import java.lang.Exception
 import java.util.zip.CRC32
+import kotlin.math.min
 
 val TIME_CAROUSEL_US = 10000
 
@@ -50,18 +52,21 @@ fun InputStream.read(
     offset: Int,
     length: Int,
     timeout: Long
-): Int = runBlocking {
+): Int {
+    val delta: Long = 1
     var byteCount = 0
-    mark(1024)
-    try {
-        withTimeout(timeout) {
-            byteCount = read(buffer, offset, length)
+    for (i in 1..(timeout/delta)) {
+        if (available() > 0) {
+            var len = length - byteCount
+            len = min(available(), len)
+            byteCount += read(buffer, offset + byteCount, len)
         }
-    } catch (e: TimeoutCancellationException) {
-        reset()
-        return@runBlocking 0
+        if (byteCount >= length) {
+            return byteCount
+        }
+        runBlocking { delay(delta) }
     }
-    return@runBlocking byteCount
+    return byteCount
 }
 
 class Device(var ctx: Context) {
@@ -171,32 +176,43 @@ class Device(var ctx: Context) {
 
         var response: ByteArray? = null
         val retries = 1
+        Log.d("COMMAND", "1")
         try {
             for (i in 1..retries) {
 //                val skipped = socket!!.inputStream.skip(socket!!.inputStream.available().toLong())
+                Log.d("COMMAND", "2")
                 socket!!.outputStream.write(byteArrayOf(LEN_CHAR))
                 socket!!.outputStream.write(byteArrayOf(cmd.size.toByte()))
                 socket!!.outputStream.write(cmd)
                 socket!!.outputStream.flush();
+                Log.d("COMMAND", "3")
                 var resp: ByteArray = ByteArray(1024)
                 var byteCount1 = 0
-                byteCount1 = socket!!.inputStream.read(resp, 0, 1, 50)
+                byteCount1 = socket!!.inputStream.read(resp, 0, 1, 100)
                 while (byteCount1 != 0 && resp[0] != LEN_CHAR) {
-                    byteCount1 = socket!!.inputStream.read(resp, 0, 1, 1)
+                    Log.d("COMMAND", "f")
+                    byteCount1 = socket!!.inputStream.read(resp, 0, 1, 100)
+                    Log.d("COMMAND", "t")
                 }
+                Log.d("COMMAND", "s")
                 if (byteCount1 == 0 || resp[0] != LEN_CHAR) {
                     continue
                 }
-                socket!!.inputStream.read(resp, 0, 1, 50)
-                val length = resp[0]
+                Log.d("COMMAND", "4")
+                socket!!.inputStream.read(resp, 0, 1, 1000)
+                val length = resp[0].toUByte()
+                if (length.toUInt().toInt() == 0)
+                    continue
                 val byteCount = socket!!.inputStream.read(resp, 0, length.toInt(), 1000)
                 val resp2 = unwrapPacket(resp.copyOfRange(0, byteCount))
                 if (resp2 != null && resp2.decodeToString().subSequence(0, 2) == "OK") {
                     response = resp2
                     break
                 } else {
-                    response = resp2
+                    response = resp
+//                    runBlocking { delay(100) }
                 }
+                Log.d("COMMAND", "5")
             }
 
             if (log) {

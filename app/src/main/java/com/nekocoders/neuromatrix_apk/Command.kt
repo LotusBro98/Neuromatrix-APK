@@ -3,6 +3,7 @@ package com.nekocoders.neuromatrix_apk
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.core.os.postDelayed
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -27,7 +28,7 @@ class Command(var channel: Int, var tau: Int, var period: Int, var duration: Int
             if (duration != -1) {
                 device.cmd_handler.postDelayed(duration.toLong()) {
 //                    device.set_impulse(ctx, segment.board1, segment.board2, channel, 1, 0)
-                    device.sendCommand(ctx, 0, byteArrayOf(0), log = false)
+//                    device.sendCommand(ctx, 0, byteArrayOf(0), log = false)
                     device.sendCommand(ctx, segment.board1, device.cmd_pulldown(channel))
                     device.sendCommand(ctx, segment.board2, device.cmd_pulldown(channel))
                 }
