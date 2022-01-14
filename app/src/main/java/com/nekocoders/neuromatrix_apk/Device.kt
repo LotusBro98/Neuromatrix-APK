@@ -96,6 +96,10 @@ class Device(var ctx: Context) {
 
         T = TIME_CAROUSEL_US
         segments = mutableListOf()
+        segments.add(Segment("Zone test",      0, 2, 500,
+            arrayOf(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15),
+            arrayOf(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15)
+        ))
         segments.add(Segment("L1P",      0, 1, 500, arrayOf(0,1,2,3,4,5,6,7), arrayOf(0)))
         segments.add(Segment("L1",       0, 1, 500, arrayOf(0,1,2,3,4,5,6,7), arrayOf(1)))
         segments.add(Segment("L2",       0, 1, 500, arrayOf(0,1,2,3,4,5,6,7), arrayOf(2)))
