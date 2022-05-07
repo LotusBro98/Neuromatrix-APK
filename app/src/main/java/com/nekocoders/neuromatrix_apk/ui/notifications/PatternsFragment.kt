@@ -10,12 +10,10 @@ import android.view.ViewGroup
 import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.nekocoders.neuromatrix_apk.*
 import com.nekocoders.neuromatrix_apk.databinding.FragmentPatternsBinding
-import com.nekocoders.neuromatrix_apk.ui.home.TimeSlotsRecyclerAdapter
 import java.lang.Exception
 import kotlin.math.roundToInt
 
@@ -226,7 +224,7 @@ class PatternsFragment : Fragment() {
 
             fun update() {
                 val device = (activity as MainActivity).device
-                if (cmd.channel == -1) {
+                if (cmd.segment == -1) {
                     edit_tau.setText("")
                     edit_f.setText("")
                     edit_t.setText(cmd.duration.toString())
@@ -258,7 +256,7 @@ class PatternsFragment : Fragment() {
                 Array(device.segments.size + 1) { if (it == 0) {"delay"} else {device.segments[it - 1].getDisplayName()}}
             )
             holder.cmd = cmd
-            holder.spinner_name.setSelection(cmd.channel + 1, false)
+            holder.spinner_name.setSelection(cmd.segment + 1, false)
             holder.update()
 
             holder.spinner_name.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
@@ -268,10 +266,10 @@ class PatternsFragment : Fragment() {
                     pos: Int,
                     id: Long
                 ) {
-                    if (cmd.channel == pos - 1) {
+                    if (cmd.segment == pos - 1) {
                         return
                     }
-                    cmd.channel = pos - 1
+                    cmd.segment = pos - 1
                     cmd.load(requireContext())
                     holder.update()
                     save(requireContext())

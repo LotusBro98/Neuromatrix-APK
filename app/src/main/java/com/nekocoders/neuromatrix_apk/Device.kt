@@ -12,7 +12,6 @@ import java.util.*
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
 import android.os.*
-import android.util.Log
 import android.widget.TextView
 import kotlinx.coroutines.*
 import java.io.InputStream
@@ -24,22 +23,12 @@ val TIME_CAROUSEL_US = 10000
 
 const val REQUEST_ENABLE_BT = 1
 private val BLUETOOTH_SPP = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
-private val CYBER_SUIT_NAME = "CyberSuit-3000"
-private val ACK_CHAR: Byte = 'A'.toByte()
-private val LEN_CHAR: Byte = 'L'.toByte()
-private val BEG_CHAR: Byte = 'H'.toByte()
-private val END_CHAR: Byte = 'B'.toByte()
+private val CYBER_SUIT_NAME = "JDY-31-SPP"
+private val BEG_CHAR: Byte = 0xB4.toByte()
 
-private val CMD_PULLDOWN: Byte = 0x01
-private val CMD_RELEASE: Byte = 0x02
-private val CMD_CALIBRATE: Byte = 0x03
-private val CMD_SET_PATTERN: Byte = 0x04
-private val CMD_GET_SAMPLES: Byte = 0x05
-private val CMD_BYPASS: Byte = 0x06
-private val CMD_CLK_SYNC: Byte = 0x07
-private val CMD_ALLOCATE: Byte = 0x08
-private val CMD_SET_PERIOD: Byte = 0x09
-private val CMD_ASSIGN: Byte = 0x0a
+private val CMD_SET_IMPULSE: Byte = 0x01
+private val CMD_CLEAR: Byte = 0x02
+private val CMD_INIT: Byte = 0x03
 
 class Impulse(var delay: Int, var duration: Int) {
 }
@@ -96,30 +85,30 @@ class Device(var ctx: Context) {
 
         T = TIME_CAROUSEL_US
         segments = mutableListOf()
-        segments.add(Segment("L1P",      0, 1, 500, arrayOf(0,1,2,3,4,5,6,7), arrayOf(0)))
-        segments.add(Segment("L1",       0, 1, 500, arrayOf(0,1,2,3,4,5,6,7), arrayOf(1)))
-        segments.add(Segment("L2",       0, 1, 500, arrayOf(0,1,2,3,4,5,6,7), arrayOf(2)))
-        segments.add(Segment("L3",       0, 1, 500, arrayOf(0,1,2,3,4,5,6,7), arrayOf(3)))
-        segments.add(Segment("L4",       0, 1, 500, arrayOf(0,1,2,3,4,5,6,7), arrayOf(4)))
-        segments.add(Segment("L5",       0, 1, 500, arrayOf(0,1,2,3,4,5,6,7), arrayOf(5)))
-        segments.add(Segment("Lудерж",   0, 1, 500, arrayOf(0,1,2,3,4,5,6,7), arrayOf(6)))
-        segments.add(Segment("Lвправо",  0, 1, 500, arrayOf(0,1,2,3,4,5,6,7), arrayOf(7)))
-        segments.add(Segment("Lвлево",   0, 1, 500, arrayOf(0,1,2,3,4,5,6,7), arrayOf(8)))
-        segments.add(Segment("Lзапястье",0, 1, 500, arrayOf(0,1,2,3,4,5,6,7), arrayOf(9)))
+        segments.add(Segment("L1P",      500))
+        segments.add(Segment("L1",       500))
+        segments.add(Segment("L2",       500))
+        segments.add(Segment("L3",       500))
+        segments.add(Segment("L4",       500))
+        segments.add(Segment("L5",       500))
+        segments.add(Segment("Lудерж",   500))
+        segments.add(Segment("Lвправо",  500))
+        segments.add(Segment("Lвлево",   500))
+        segments.add(Segment("Lзапястье",500))
 
-        segments.add(Segment("R1P",      0, 2, 500, arrayOf(8,9,10,11,12,13,14,15), arrayOf(0)))
-        segments.add(Segment("R1",       0, 2, 500, arrayOf(8,9,10,11,12,13,14,15), arrayOf(1)))
-        segments.add(Segment("R2",       0, 2, 500, arrayOf(8,9,10,11,12,13,14,15), arrayOf(2)))
-        segments.add(Segment("R3",       0, 2, 500, arrayOf(8,9,10,11,12,13,14,15), arrayOf(3)))
-        segments.add(Segment("R4",       0, 2, 500, arrayOf(8,9,10,11,12,13,14,15), arrayOf(4)))
-        segments.add(Segment("R5",       0, 2, 500, arrayOf(8,9,10,11,12,13,14,15), arrayOf(5)))
-        segments.add(Segment("Rудерж",   0, 2, 500, arrayOf(8,9,10,11,12,13,14,15), arrayOf(6)))
-        segments.add(Segment("Rвправо",  0, 2, 500, arrayOf(8,9,10,11,12,13,14,15), arrayOf(7)))
-        segments.add(Segment("Rвлево",   0, 2, 500, arrayOf(8,9,10,11,12,13,14,15), arrayOf(8)))
-        segments.add(Segment("Rзапястье",0, 2, 500, arrayOf(8,9,10,11,12,13,14,15), arrayOf(9)))
+        segments.add(Segment("R1P",      500))
+        segments.add(Segment("R1",       500))
+        segments.add(Segment("R2",       500))
+        segments.add(Segment("R3",       500))
+        segments.add(Segment("R4",       500))
+        segments.add(Segment("R5",       500))
+        segments.add(Segment("Rудерж",   500))
+        segments.add(Segment("Rвправо",  500))
+        segments.add(Segment("Rвлево",   500))
+        segments.add(Segment("Rзапястье",500))
 
         for (i in segments.indices) {
-            segments[i].curCommand.channel = i
+            segments[i].curCommand.segment = i
             segments[i].curCommand.load(ctx)
         }
     }
@@ -154,61 +143,44 @@ class Device(var ctx: Context) {
         BTConnectAsyncTask(ctx, adapter).execute(addr)
     }
 
-    fun postCommand(ctx: Context, board: Int, command: ByteArray, msg:String="", log: Boolean=true) {
+    fun postCommand(ctx: Context, command: ByteArray, msg:String="", log: Boolean=true) {
         cmd_handler.post {
-            sendCommand(ctx, board, command, log, msg)
+            sendCommand(ctx, command, log, msg)
         }
     }
 
-    fun sendCommand(ctx: Context, board: Int, command: ByteArray, log: Boolean=true, msg: String="") {
-        val address = boards[board]
-        var addr = byteArrayOf()
-        for (i in address) {
-            addr += CMD_BYPASS
-            if (i == 1) {
-                addr += 1
-            } else {
-                addr += 2
-            }
-        }
-        var cmd_addr = addr + command
-        val cmd = wrapPacket(cmd_addr)
+    fun sendCommand(ctx: Context, command: ByteArray, log: Boolean=true, msg: String="") {
+        val cmd = wrapPacket(command)
 
         var response: ByteArray? = null
-        val retries = 16
+        val retries = 1
         try {
             for (i in 1..retries) {
-//                val skipped = socket!!.inputStream.skip(socket!!.inputStream.available().toLong())
-                socket!!.outputStream.write(byteArrayOf(LEN_CHAR))
-                socket!!.outputStream.write(byteArrayOf(cmd.size.toByte()))
                 socket!!.outputStream.write(cmd)
                 socket!!.outputStream.flush();
                 var resp: ByteArray = ByteArray(1024)
                 var byteCount1 = 0
                 byteCount1 = socket!!.inputStream.read(resp, 0, 1, 200)
-                while (byteCount1 != 0 && resp[0] != LEN_CHAR) {
+                while (byteCount1 != 0 && resp[0] != BEG_CHAR) {
                     byteCount1 = socket!!.inputStream.read(resp, 0, 1, 200)
                 }
-                if (byteCount1 == 0 || resp[0] != LEN_CHAR) {
+                if (byteCount1 == 0 || resp[0] != BEG_CHAR) {
                     continue
                 }
                 socket!!.inputStream.read(resp, 0, 1, 1000)
-                val length = resp[0].toUByte()
+                var length = resp[0].toUByte()
                 if (length.toUInt().toInt() == 0)
                     continue
-                val byteCount = socket!!.inputStream.read(resp, 0, length.toInt(), 1000)
+                val byteCount = socket!!.inputStream.read(resp, 0, length.toInt() - 1, 1000)
                 val resp2 = unwrapPacket(resp.copyOfRange(0, byteCount))
+                response = resp2
                 if (resp2 != null && resp2.decodeToString().subSequence(0, 2) == "OK") {
-                    response = resp2
                     break
-                } else {
-                    response = resp
-//                    runBlocking { delay(100) }
                 }
             }
 
             if (log) {
-                cmd_log += msg + " --> : " + bytesToHex(cmd_addr) + "\n"
+                cmd_log += msg + " --> : " + bytesToHex(cmd) + "\n"
                 cmd_log += "<-- : " + response?.decodeToString() + "\n"
 
                 ui_handler.post {
@@ -226,124 +198,37 @@ class Device(var ctx: Context) {
     }
 
     fun initialize(ctx: Context) {
-        var masks = Array(boards.size)
-        {
-            Array(segments.size) {
-                IntArray(0)
-            }
-        }
-
-        var slots = IntArray(segments.size, {segments[it].timeSlot})
-
-        for (i in boards.indices) {
-            for (i_seg in segments.indices) {
-                if (segments[i_seg].board1 == i) {
-                    masks[i][i_seg] = segments[i_seg].mask1.toIntArray()
-                } else if (segments[i_seg].board2 == i) {
-                    masks[i][i_seg] = segments[i_seg].mask2.toIntArray()
-                }
-            }
-        }
-
-        for (i in boards.indices) {
-//            postCommand(ctx, 0, byteArrayOf(0), log=false)
-            postCommand(ctx, i, cmd_assign(masks[i]), msg="assign")
-        }
-
-        for (i_seg in segments.indices) {
-            calibrate_channel(ctx, segments[i_seg].board1, segments[i_seg].board2, i_seg)
-        }
-
-//        postCommand(ctx, 0, byteArrayOf(0), log=false)
-        postCommand(ctx, 0, cmd_clk_sync(1), "clk sync")
-
-        for (i in boards.indices) {
-//            postCommand(ctx, 0, byteArrayOf(0), log=false)
-            postCommand(ctx, i, byteArrayOf(CMD_RELEASE))
-//            postCommand(ctx, 0, byteArrayOf(0), log=false)
-            postCommand(ctx, i, cmd_allocate(slots), "allocate")
-//            postCommand(ctx, 0, byteArrayOf(0), log=false)
-            postCommand(ctx, i, cmd_set_period(T))
-        }
+        postCommand(ctx, cmd_init(), "Init")
     }
 
-    fun cmd_set_pattern(channel: Int, per: Int, pattern: Array<Impulse>): ByteArray {
-        var cmd = byteArrayOf(CMD_SET_PATTERN)
-        var period = per - 1
-        if (period < 0) {
-            period = 0
+    fun cmd_set_impulse(segment: Int, per: Int, duration: Int): ByteArray {
+        var cmd = byteArrayOf(CMD_SET_IMPULSE)
+        var period = per
+        if (period < 1) {
+            period = 1
         }
-        cmd += UInt16toByteArray(channel)
+        cmd += UInt16toByteArray(segment)
+        cmd += UInt16toByteArray(duration)
         cmd += UInt16toByteArray(period)
-        for (impulse in pattern) {
-            cmd += UInt16toByteArray(impulse.delay) + UInt16toByteArray(impulse.duration)
-        }
         return cmd
     }
 
-    fun cmd_allocate(slots: IntArray): ByteArray {
-        var cmd = byteArrayOf(CMD_ALLOCATE)
-        for (slot in slots) {
-            cmd += UInt16toByteArray(slot)
-        }
+    fun cmd_clear(segment: Int): ByteArray {
+        var cmd = byteArrayOf(CMD_CLEAR)
+        cmd += byteArrayOf(segment.toByte())
         return cmd
     }
 
-    fun cmd_set_period(period: Int): ByteArray  {
-        var cmd = byteArrayOf(CMD_SET_PERIOD)
-        cmd += UInt32toByteArray(period.toLong())
+    fun cmd_init(): ByteArray {
+        var cmd = byteArrayOf(CMD_INIT)
         return cmd
     }
 
-    fun cmd_clk_sync(depth: Int): ByteArray  {
-        var cmd = byteArrayOf(CMD_CLK_SYNC)
-        cmd += 0
-        cmd += depth.toByte()
-        return cmd
-    }
-
-    fun cmd_pulldown(channel: Int): ByteArray {
-        var cmd = byteArrayOf(CMD_PULLDOWN)
-        cmd += channel.toByte()
-        return cmd
-    }
-
-    fun cmd_calibrate(channel: Int): ByteArray {
-        var cmd = byteArrayOf(CMD_CALIBRATE)
-        cmd += channel.toByte()
-        return cmd
-    }
-
-    fun cmd_assign(channel_masks: Array<IntArray>): ByteArray {
-        var cmd = byteArrayOf(CMD_ASSIGN)
-        for (channel in channel_masks) {
-            var mask = 0
-            for (i in 0..15) {
-                if (i in channel) {
-                    mask = mask or (1 shl i)
-                }
-            }
-            cmd += UInt16toByteArray(mask)
-        }
-        return cmd
-    }
-
-    fun set_impulse(ctx: Context, brd1: Int, brd2: Int, channel: Int, period: Int, tau: Int) {
-//        postCommand(ctx, 0, byteArrayOf(0), log=false)
-        postCommand(ctx, brd2, cmd_set_pattern(channel, period, arrayOf(Impulse(tau, tau))), msg="pattern ch " + channel + " brd " + brd2)
-//        postCommand(ctx, 0, byteArrayOf(0), log=false)
-        postCommand(ctx, brd1, cmd_set_pattern(channel, period, arrayOf(Impulse(0, tau))), msg="pattern ch " + channel + " brd " + brd1)
+    fun set_impulse(ctx: Context, segment: Int, period: Int, tau: Int) {
+        postCommand(ctx, cmd_set_impulse(segment, period, tau), msg="impulse on " + segments[segment].name + ", tau=" + tau)
     }
 
     fun calibrate_channel(ctx: Context, brd1: Int, brd2: Int, channel: Int) {
-//        postCommand(ctx, 0, byteArrayOf(0), log=false)
-        postCommand(ctx, brd2, cmd_pulldown(channel))
-//        postCommand(ctx, 0, byteArrayOf(0), log=false)
-        postCommand(ctx, brd1, cmd_calibrate(channel), msg="calibrate ch " + channel + " brd " + brd1)
-//        postCommand(ctx, 0, byteArrayOf(0), log=false)
-        postCommand(ctx, brd1, cmd_pulldown(channel))
-//        postCommand(ctx, 0, byteArrayOf(0), log=false)
-        postCommand(ctx, brd2, cmd_calibrate(channel), msg="calibrate ch " + channel + " brd " + brd2)
     }
 
     fun UInt16toByteArray(value: Int): ByteArray {
@@ -375,20 +260,19 @@ class Device(var ctx: Context) {
         val crc32 = CRC32()
         crc32.reset()
         crc32.update(command)
-        val cmd = byteArrayOf(BEG_CHAR) + command + UInt32toByteArray(crc32.value) + byteArrayOf(END_CHAR)
+        var cmd = byteArrayOf((command.size + 5).toByte()) + command
+        cmd = byteArrayOf(BEG_CHAR) + cmd + UInt32toByteArray(crc32.value)
         return cmd
     }
 
     fun unwrapPacket(packet: ByteArray): ByteArray? {
-        if (packet.size < 6)
+        if (packet.size < 4)
             return null
-        if (packet[0] != BEG_CHAR || packet[packet.size - 1] != END_CHAR)
-            return packet
 
-        val crc_recv = ByteArrayToUInt32(packet.copyOfRange(packet.size-5, packet.size-1))
+        val crc_recv = ByteArrayToUInt32(packet.copyOfRange(packet.size-4, packet.size))
         val crc32 = CRC32()
         crc32.reset()
-        val data = packet.copyOfRange(1, packet.size - 5)
+        val data = packet.copyOfRange(0, packet.size - 4)
         crc32.update(data)
         val crc_calc = crc32.value
 
