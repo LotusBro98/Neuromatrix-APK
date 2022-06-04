@@ -29,6 +29,7 @@ private val BEG_CHAR: Byte = 0xB4.toByte()
 private val CMD_SET_IMPULSE: Byte = 0x01
 private val CMD_CLEAR: Byte = 0x02
 private val CMD_INIT: Byte = 0x03
+private val CMD_CFG_SEG: Byte = 0x04
 
 class Impulse(var delay: Int, var duration: Int) {
 }
@@ -85,27 +86,32 @@ class Device(var ctx: Context) {
 
         T = TIME_CAROUSEL_US
         segments = mutableListOf()
-        segments.add(Segment("L1P",      500))
-        segments.add(Segment("L1",       500))
-        segments.add(Segment("L2",       500))
-        segments.add(Segment("L3",       500))
-        segments.add(Segment("L4",       500))
-        segments.add(Segment("L5",       500))
-        segments.add(Segment("Lудерж",   500))
-        segments.add(Segment("Lвправо",  500))
-        segments.add(Segment("Lвлево",   500))
-        segments.add(Segment("Lзапястье",500))
-
-        segments.add(Segment("R1P",      500))
-        segments.add(Segment("R1",       500))
-        segments.add(Segment("R2",       500))
-        segments.add(Segment("R3",       500))
-        segments.add(Segment("R4",       500))
-        segments.add(Segment("R5",       500))
-        segments.add(Segment("Rудерж",   500))
-        segments.add(Segment("Rвправо",  500))
-        segments.add(Segment("Rвлево",   500))
-        segments.add(Segment("Rзапястье",500))
+        segments.add(Segment("L1P",      0, intArrayOf(0), 0, intArrayOf(9),500))
+        segments.add(Segment("L1P",      0, intArrayOf(0), 0, intArrayOf(10),500))
+        segments.add(Segment("L1P",      0, intArrayOf(0), 0, intArrayOf(11),500))
+        segments.add(Segment("L1P",      0, intArrayOf(0), 0, intArrayOf(12),500))
+        segments.add(Segment("L1P",      0, intArrayOf(0), 0, intArrayOf(13),500))
+        segments.add(Segment("L1P",      0, intArrayOf(0), 0, intArrayOf(8),500))
+//        segments.add(Segment("L1",       500))
+//        segments.add(Segment("L2",       500))
+//        segments.add(Segment("L3",       500))
+//        segments.add(Segment("L4",       500))
+//        segments.add(Segment("L5",       500))
+//        segments.add(Segment("Lудерж",   500))
+//        segments.add(Segment("Lвправо",  500))
+//        segments.add(Segment("Lвлево",   500))
+//        segments.add(Segment("Lзапястье",500))
+//
+//        segments.add(Segment("R1P",      500))
+//        segments.add(Segment("R1",       500))
+//        segments.add(Segment("R2",       500))
+//        segments.add(Segment("R3",       500))
+//        segments.add(Segment("R4",       500))
+//        segments.add(Segment("R5",       500))
+//        segments.add(Segment("Rудерж",   500))
+//        segments.add(Segment("Rвправо",  500))
+//        segments.add(Segment("Rвлево",   500))
+//        segments.add(Segment("Rзапястье",500))
 
         for (i in segments.indices) {
             segments[i].curCommand.segment = i
@@ -198,6 +204,10 @@ class Device(var ctx: Context) {
     }
 
     fun initialize(ctx: Context) {
+        for (seg in segments) {
+            set_seg(ctx, seg)
+        }
+
         postCommand(ctx, cmd_init(), "Init")
     }
 
@@ -222,6 +232,35 @@ class Device(var ctx: Context) {
     fun cmd_init(): ByteArray {
         var cmd = byteArrayOf(CMD_INIT)
         return cmd
+    }
+
+    fun cmd_set_seg(segment: Int, adr1: Int, mask1:Int, adr2: Int, mask2:Int, time_window_us:Int): ByteArray {
+        var cmd = byteArrayOf(CMD_CFG_SEG)
+        cmd += UInt16toByteArray(mask1)
+        cmd += UInt16toByteArray(mask2)
+        cmd += UInt16toByteArray(time_window_us)
+        cmd += byteArrayOf(segment.toByte())
+        cmd += byteArrayOf(adr1.toByte())
+        cmd += byteArrayOf(adr2.toByte())
+        return cmd
+    }
+
+    fun get_mask(arr: IntArray): Int {
+        var mask = 0
+        for (i in 0..15) {
+            if (i in arr) {
+                mask = mask or (1 shl i)
+            }
+        }
+        return mask
+    }
+
+    fun set_seg(ctx: Context, segment: Segment) {
+        val id = segments.indexOf(segment)
+        val mask1 = get_mask(segment.mask1)
+        val mask2 = get_mask(segment.mask2)
+        postCommand(ctx, cmd_set_seg(id, segment.adr1, mask1, segment.adr2, mask2, segment.timeSlot), msg= "set segment ${segment.name}")
+//        postCommand(ctx, cmd_init(), "Init")
     }
 
     fun set_impulse(ctx: Context, segment: Int, period: Int, tau: Int) {
