@@ -1,5 +1,6 @@
 package com.nekocoders.neuromatrix_apk.ui.dashboard
 
+import android.R
 import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -11,12 +12,20 @@ import androidx.lifecycle.ViewModelProvider
 import com.nekocoders.neuromatrix_apk.databinding.FragmentCommandsBinding
 import android.widget.SeekBar
 import android.widget.SeekBar.OnSeekBarChangeListener
-import com.nekocoders.neuromatrix_apk.MAX_DURATION_MS
-import com.nekocoders.neuromatrix_apk.MIN_FREQ_PERIOD_uS
-import com.nekocoders.neuromatrix_apk.MainActivity
 import kotlin.math.ln
 import kotlin.math.pow
 import kotlin.math.roundToInt
+import android.provider.AlarmClock.EXTRA_MESSAGE
+
+import android.widget.EditText
+
+import android.content.Intent
+import android.provider.AlarmClock
+import androidx.core.view.size
+import androidx.fragment.app.FragmentTransaction
+import com.nekocoders.neuromatrix_apk.*
+
+val REQUEST_SEG_CONFIG: Int = 11
 
 class CommandsFragment : Fragment() {
 
@@ -60,18 +69,60 @@ class CommandsFragment : Fragment() {
             cmd.execute(requireContext(), device)
         }
 
+        binding.buttonAdd.setOnClickListener {
+            val device = (activity as MainActivity).device
+            device.addSegment()
+            addSegmentButton(device.segments.last(), device.segments.size - 1)
+            showConfigureSegment(device.segments.last())
+        }
+
+        binding.buttonRemove.setOnClickListener {
+            val device = (activity as MainActivity).device
+            if (device.segments.size <= 1)
+                return@setOnClickListener
+            device.removeSegment()
+            binding.commandsRadio.removeViewAt(binding.commandsRadio.size - 1);
+        }
+
         return root
+    }
+
+    fun showConfigureSegment(segment: Segment) {
+        val intent = Intent(this.context, SegmentConfigActivity::class.java)
+        val device = (activity as MainActivity).device
+        intent.putExtra("segment", device.segments.indexOf(segment))
+        startActivityForResult(intent, REQUEST_SEG_CONFIG)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        val main = activity as MainActivity
+
+        main.reloadDevice()
+        val ft: FragmentTransaction = requireFragmentManager().beginTransaction()
+        ft.detach(this)
+        ft.attach(this)
+        ft.commit()
+    }
+
+    fun addSegmentButton(segment: Segment, i: Int) {
+        val button = RadioButton(this.context)
+        button.setPadding(24, 24, 24, 24)
+        button.text = segment.getDisplayName()
+        button.id = i + 1
+        button.setOnLongClickListener {
+            showConfigureSegment(segment)
+            true
+        }
+        binding.commandsRadio.addView(button)
     }
 
     @SuppressLint("ResourceType")
     fun setupRadioButtons() {
         for (i in (activity as MainActivity).device.segments.indices) {
             val segment = (activity as MainActivity).device.segments[i]
-            val button = RadioButton(this.context)
-            button.setPadding(24, 24, 24, 24)
-            button.text = segment.getDisplayName()
-            button.id = i + 1
-            binding.commandsRadio.addView(button)
+            addSegmentButton(segment, i)
         }
 
         binding.commandsRadio.setOnCheckedChangeListener(object : RadioGroup.OnCheckedChangeListener {

@@ -86,36 +86,47 @@ class Device(var ctx: Context) {
 
         T = TIME_CAROUSEL_US
         segments = mutableListOf()
-        segments.add(Segment("L1P",      0, intArrayOf(0), 0, intArrayOf(9),500))
-        segments.add(Segment("L1P",      0, intArrayOf(0), 0, intArrayOf(10),500))
-        segments.add(Segment("L1P",      0, intArrayOf(0), 0, intArrayOf(11),500))
-        segments.add(Segment("L1P",      0, intArrayOf(0), 0, intArrayOf(12),500))
-        segments.add(Segment("L1P",      0, intArrayOf(0), 0, intArrayOf(13),500))
-        segments.add(Segment("L1P",      0, intArrayOf(0), 0, intArrayOf(8),500))
-//        segments.add(Segment("L1",       500))
-//        segments.add(Segment("L2",       500))
-//        segments.add(Segment("L3",       500))
-//        segments.add(Segment("L4",       500))
-//        segments.add(Segment("L5",       500))
-//        segments.add(Segment("Lудерж",   500))
-//        segments.add(Segment("Lвправо",  500))
-//        segments.add(Segment("Lвлево",   500))
-//        segments.add(Segment("Lзапястье",500))
-//
-//        segments.add(Segment("R1P",      500))
-//        segments.add(Segment("R1",       500))
-//        segments.add(Segment("R2",       500))
-//        segments.add(Segment("R3",       500))
-//        segments.add(Segment("R4",       500))
-//        segments.add(Segment("R5",       500))
-//        segments.add(Segment("Rудерж",   500))
-//        segments.add(Segment("Rвправо",  500))
-//        segments.add(Segment("Rвлево",   500))
-//        segments.add(Segment("Rзапястье",500))
+//        segments.add(Segment("L1P",      0, intArrayOf(0), 0, intArrayOf(9),500))
+
+        load(ctx)
+    }
+
+    fun save(ctx: Context) {
+        val sharedPref = ctx.getSharedPreferences(PREFERENCE_FILE_KEY, Context.MODE_PRIVATE)
+        with(sharedPref.edit()) {
+            putInt("n_segments", segments.size)
+            commit()
+        }
+
+        for (i in segments.indices) {
+            segments[i].curCommand.save(ctx)
+            segments[i].save(ctx, i)
+        }
+    }
+
+    fun addSegment() {
+        segments.add(Segment("---",      -1, intArrayOf(), -1, intArrayOf(),500))
+        save(ctx)
+    }
+
+    fun removeSegment() {
+        segments.removeLast()
+        save(ctx)
+    }
+
+    fun load(ctx: Context) {
+        val sharedPref = ctx.getSharedPreferences(PREFERENCE_FILE_KEY, Context.MODE_PRIVATE)
+        val n_segments = sharedPref.getInt("n_segments", 1)
+
+        segments.clear()
+        for (i in 1..n_segments) {
+            segments.add(Segment("---",      -1, intArrayOf(), -1, intArrayOf(),500))
+        }
 
         for (i in segments.indices) {
             segments[i].curCommand.segment = i
             segments[i].curCommand.load(ctx)
+            segments[i].load(ctx, i)
         }
     }
 

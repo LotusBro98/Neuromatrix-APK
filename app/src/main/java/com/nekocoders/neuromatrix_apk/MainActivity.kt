@@ -46,4 +46,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    fun reloadDevice() {
+        device = Device(this)
+    }
 }
