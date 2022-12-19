@@ -23,7 +23,7 @@ val TIME_CAROUSEL_US = 10000
 
 const val REQUEST_ENABLE_BT = 1
 private val BLUETOOTH_SPP = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
-private val CYBER_SUIT_NAME = "JDY-31-SPP"
+private val CYBER_SUIT_NAME = "CyberMyonics"
 private val BEG_CHAR: Byte = 0xB4.toByte()
 
 private val CMD_SET_IMPULSE: Byte = 0x01
