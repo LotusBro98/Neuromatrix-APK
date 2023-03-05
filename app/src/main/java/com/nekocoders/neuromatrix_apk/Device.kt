@@ -30,6 +30,7 @@ private val CMD_SET_IMPULSE: Byte = 0x01
 private val CMD_CLEAR: Byte = 0x02
 private val CMD_INIT: Byte = 0x03
 private val CMD_CFG_SEG: Byte = 0x04
+private val CMD_SELF_TEST: Byte = 0x05
 
 class Impulse(var delay: Int, var duration: Int) {
 }
@@ -59,7 +60,7 @@ fun InputStream.read(
     return byteCount
 }
 
-class Device(var ctx: Context) {
+class Device(var ctx: Activity) {
     var cmd_log: String = ""
     var T: Int
     var segments: MutableList<Segment>
@@ -197,8 +198,14 @@ class Device(var ctx: Context) {
             }
 
             if (log) {
-                cmd_log += msg + " --> : " + bytesToHex(cmd) + "\n"
-                cmd_log += "<-- : " + response?.decodeToString() + "\n"
+                val cmd_data = response?.copyOfRange(4, response.size)
+                var cmd_data_str: String? = null
+                if (command[0] == CMD_SELF_TEST) {
+                    cmd_data_str = "addr=" + (cmd_data?.get(0)?.toString() ?: "-1") + cmd_data?.copyOfRange(1, cmd_data.size - 1)?.let { bytesToBitMask(it) }
+                } else {
+                    cmd_data_str = cmd_data?.let { bytesToHex(it) }
+                }
+                cmd_log += msg + " --> " + response?.decodeToString(0, 3) + " " + cmd_data_str + "\n"
 
                 ui_handler.post {
                     cmd_log_view?.text = cmd_log
@@ -256,6 +263,11 @@ class Device(var ctx: Context) {
         return cmd
     }
 
+    fun cmd_self_test(): ByteArray {
+        var cmd = byteArrayOf(CMD_SELF_TEST)
+        return cmd
+    }
+
     fun get_mask(arr: IntArray): Int {
         var mask = 0
         for (i in 0..15) {
@@ -272,6 +284,10 @@ class Device(var ctx: Context) {
         val mask2 = get_mask(segment.mask2)
         postCommand(ctx, cmd_set_seg(id, segment.adr1, mask1, segment.adr2, mask2, segment.timeSlot), msg= "set segment ${segment.name}")
 //        postCommand(ctx, cmd_init(), "Init")
+    }
+
+    fun self_test(ctx: Context) {
+        postCommand(ctx, cmd_self_test(), msg="Self Test")
     }
 
     fun set_impulse(ctx: Context, segment: Int, period: Int, tau: Int) {
@@ -346,6 +362,22 @@ class Device(var ctx: Context) {
             hexChars[j * 3 + 2] = ' '
         }
         return String(hexChars)
+    }
+
+    fun bytesToBitMask(bytes: ByteArray): String {
+        val indices = mutableListOf<Int>();
+        for (i in bytes.indices) {
+            for (j in 0..7) {
+                if (((bytes[i].toUByte().toInt() ushr j) and 0x1) != 0) {
+                    indices.add(i * 8 + j);
+                }
+            }
+        }
+        var string = " | "
+        for (ind in indices) {
+            string += "$ind | "
+        }
+        return string
     }
 
     inner private class BTConnectAsyncTask(var ctx: Context, var adapter: BluetoothAdapter) : AsyncTask<String?, Int?, Boolean>() {

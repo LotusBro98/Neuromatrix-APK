@@ -109,6 +109,10 @@ class InitFragment : Fragment() {
             }
         }
 
+        binding.buttonTest.setOnClickListener {
+            main.device.self_test(main)
+        }
+
         binding.commandLog.text = (activity as MainActivity).device.cmd_log
 
         return root
